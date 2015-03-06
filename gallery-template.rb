@@ -1,5 +1,28 @@
 require 'erb'
 require 'fileutils'
+require 'optparse'
+
+options = {}
+
+optparse = OptionParser.new do |opts|
+	opts.banner = "Usage: gallery-template.rb --file file_output.html"
+
+	options[:file] = false
+	opts.on( '-f', '--file', 'Name the html file.') do
+		options[:file] = true
+	end
+
+	options[:directory] = false
+	opts.on( '-d', '--d', 'Name the directory.') do
+		options[:directory] = true
+	end
+
+end
+
+optparse.parse!
+
+
+
 
 def get_template(img_tag_vect)
 	%{
@@ -18,20 +41,31 @@ def get_template(img_tag_vect)
 	}
 end
 
-if not Dir.exists?("./public")
-	Dir.mkdir("public")
-	Dir.mkdir("public/imgs")
-	FileUtils.cp_r Dir.pwd+"/photos/.", "public/imgs/"
+if options[:directory]
+	directory_name = ARGV[1]
+else
+	directory_name = "public"
 end
 
-imgs_vect=Dir.glob("public/imgs/*.jpg")
+if not Dir.exists?("./"+directory_name)
+	Dir.mkdir(directory_name)
+	Dir.mkdir(directory_name+"/imgs")
+	FileUtils.cp_r Dir.pwd+"/photos/.", directory_name+"/imgs/"
+end
+
+imgs_vect=Dir.glob(directory_name+"/imgs/*.jpg")
 img_tag_vect = Array.new(imgs_vect.length)
 
 (0..(imgs_vect.length-1)).each do |q|
 	img_tag_vect[q] = "<img src=\"#{"."+(imgs_vect[q])[6..-1]}\">"
 end
 
-html_file= "./public/gallery.html"
+if options[:file]
+	html_file = "./"+directory_name+"/"+ARGV[0]
+else
+	html_file= "./"+directory_name+"/gallery.html"
+end
+
 puts "Writing html file: "+ html_file
 
 renderer = ERB.new(get_template(img_tag_vect))
